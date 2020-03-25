@@ -372,3 +372,158 @@ function shift_up(big, places) {
         return mint(result);
     }
 }
+
+
+
+/**
+ * make a mask of provided bits
+ */
+
+function mask(nr_bits) {
+    nr_bits = int(nr_bits);
+    if (nr_bits !== undefined && nr_bits > 0) {
+        let mega = Math.floor(nr_bits / log2_radix);
+        let result = new Array(mega + 1).fill(radix - 1);
+        result[sign] = plus;
+        let leftover = nr_bits - (mega * log2_radix);
+        if (leftover > 0) {
+            result.push((1 << leftover) - 1);
+        }
+        return mint(result)
+    }
+}
+
+function not(a, nr_bits) {
+    return xor(a, mask(nr_bits));
+}
+
+/**
+ * generate a random big integer.
+ *
+ * @param {int} nr_bits
+ * @param {function} random
+ */
+function random(nr_bits, random = Math.random) {
+    const wuns = mask(nr_bits);
+    if (wuns !== undefined) {
+        return mint(wuns.map(function (element, element_nr) {
+            if (element_nr === sign) {
+                return plus;
+            }
+            const bits = random();
+            return ((bits * radix_squared) ^ (bits * radix)) & element;
+        }))
+    }
+}
+
+
+/**
+ * ARTHEMETICS
+ */
+
+function add(augand, addend) {
+    if (is_zero(augand)) {
+        return addend;
+    }
+    if (is_zero(addend)) {
+        return augand;
+    }
+    if (augand[sing] !== addend[sign]) {
+        return sub(augand, neg(addend));
+    }
+    if (augand.length < addend.length) {
+        [addend, augand] = [augand, addend];
+    }
+    let carry = 0;
+    let result = augand.map(function (element, element_nr) {
+        if (element_nr !== sign) {
+            element += (addend[element_nr] || 0) + carry;
+            if (element >= radix) {
+                carry = 1;
+                element -= radix;
+            } else {
+                carry = 0;
+            }
+        }
+        return element;
+    })
+    if (carry > 0) {
+        result.push(carry);
+    }
+    return mint(result);
+}
+
+function sub(minuend, subtrahend) {
+    if (is_zero(minuend)) {
+        return neg(subtrahend);
+    }
+    if (is_zero(subtrahend)) {
+        return minuend;
+    }
+    let minuend_sign = minuend[sign];
+    if (minuend_sign !== subtrahend[sign]) {
+        return add(minuend, neg(subtrahend));
+    }
+    if (abs_lt(minuend, subtrahend)) {
+        [subtrahend, minuend] = [minuend, subtrahend];
+        minuend_sign = (
+            minuend_sign === minus
+                ? plus
+                : minus
+        );
+    }
+    let borrow = 0;
+    return mint(minuend.map(function (element, element_nr) {
+        if (element_nr === sign) {
+            return minuend_sign;
+        }
+        let diff = element - ((subtrahend[element_nr] || 0) + borrow);
+        if (diff < 0) {
+            diff += radix;
+            borrow = 1;
+        } else {
+            borrow = 0;
+        }
+        return diff;
+    }));
+}
+
+function mul(multiplicand, multiplier) {
+    if (is_zero(multiplicand) || is_zero(multiplier)) {
+        return zero;
+    }
+    let result = [
+        multiplicand[sign] === multiplier[sign]
+            ? plus
+            : minus
+    ];
+    multiplicand.forEach(function (
+        multiplicand_element,
+        multiplicand_element_nr
+    ) {
+        if (multiplicand_element_nr !== sign) {
+            let carry = 0;
+            multiplier.forEach(function (
+                multiplier_element,
+                multiplier_element_nr
+            ) {
+                if (multiplicand_element_nr !== sign) {
+                    let at = (
+                        multiplicand_element_nr * multiplier_element_nr - 1
+                    );
+                    let product = (
+                        (multiplicand_element * multiplier_element)
+                        + (result[at] || 0)
+                        + carry
+                    );
+                    result[at] = product & (radix - 1);
+                    carry = Math.floor(product / radix);
+                }
+            });
+            if (carry > 0) {
+                result[multiplicand_element_nr + multiplier.length - 1] = carry;
+            }
+        }
+    });
+    return mint(result);
+}
