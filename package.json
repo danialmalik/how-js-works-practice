@@ -1,0 +1,21 @@
+{
+  "name": "how-js-works",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danialmalik/how-js-works-practice.git"
+  },
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/danialmalik/how-js-works-practice/issues"
+  },
+  "homepage": "https://github.com/danialmalik/how-js-works-practice#readme"
+}
